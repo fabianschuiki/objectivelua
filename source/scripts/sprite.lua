@@ -9,9 +9,9 @@ function Sprite:animate()
 	print("Sprite:animate(), sprite name = " .. self.name)
 end
 
-subclass(Item, OfficeItem)
+class("SpecialSprite", Sprite)
 
-function OfficeItem:hello()
+function SpecialSprite:speciality()
+	print("Special sprite detected!")
+	self.name = "PARTY HALL!!!"
 end
-
-local o = OfficeItem:new()

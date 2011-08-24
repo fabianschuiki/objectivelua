@@ -1,5 +1,6 @@
 #pragma once
 
+#include "class.h"
 #include "describe.h"
 #include "error.h"
 #include "exposable.h"

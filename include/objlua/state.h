@@ -85,4 +85,8 @@ private:
 		std::cout << LuaDescribe::generic(L, lua_type(L, top), top) << "\n";
 		return 0;
 	}
+	
+	static int lua_class(lua_State * L)
+	{
+	}
 };

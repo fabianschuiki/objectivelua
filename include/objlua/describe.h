@@ -34,6 +34,7 @@ public:
 	static std::string table(lua_State * L, int index,
 							 int indent = 0)
 	{
+		if (index < 0) index += lua_gettop(L) + 1;
 		std::stringstream s;
 		std::string pad((indent + 1) * 4, ' ');
 		s << "{\n";
@@ -50,7 +51,7 @@ public:
 			if (std::string(key) == "__index")
 				s << "...";
 			else
-				s << generic(L, lua_type(L, -1), lua_gettop(L),
+				s << generic(L, lua_type(L, -1), -1,
 							 indent + 1);
 			s << "\n";
 		}

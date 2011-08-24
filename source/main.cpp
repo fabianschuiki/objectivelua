@@ -9,6 +9,7 @@ int main(int argc, char * argv[])
 {
     //Create a Lua state.
     LuaState lua;
+	LuaClass::install(lua);
     
 	//Expose the Sprite class.
 	Sprite::expose(lua);
@@ -18,8 +19,8 @@ int main(int argc, char * argv[])
         lua.reportError();
     
 	//Now the script should actually have returned a Sprite instance.
-	Sprite * sprite = Sprite::fromStack(lua, -1);
-	sprite->animate();
+	/*Sprite * sprite = Sprite::fromStack<Sprite>(lua, -1);
+	sprite->animate();*/
     
     return 0;
 }

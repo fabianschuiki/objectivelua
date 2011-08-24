@@ -1,6 +1,7 @@
 #pragma once
 #include "error.h"
 #include "lua.h"
+#include "stack.h"
 
 
 /** All the objects that are likely to be exposed to Lua should inherit from
@@ -8,20 +9,18 @@
  instance pairs between C++ and Lua. */
 class LuaExposable {
 public:
-	/** Exposes a basic set of functions to Lua. Subclasses should have their
-	 own expose function which first calls the parent's expose and then adds its
-	 own functions to the instance. */
-	template <typename T> static void expose(lua_State * L,
-											 const char * className)
+	/** Exposes a basic set of functions to Lua. Classes which would like to ex-
+	 pose to Lua should first create their own class table using LuaClass::make,
+	 call LuaExposable::expose to add the basic funcitonality and register their
+	 own functions.*/
+	template <typename T> static void expose(lua_State * L)
 	{
 		static const luaL_Reg functions[] = {
 			{"new", lua_new<T>},
 			{"delete", lua_delete},
 			{NULL, NULL}
 		};
-		
-		//Create the metatable for this class.
-		luaL_register(L, className, functions);
+		luaL_register(L, 0, functions);
 	}
 	
 	/** Interprets the given stack item as an exposed object and tries to re-
@@ -63,6 +62,9 @@ public:
 	LuaExposable(lua_State * L, const char * className = NULL,
 				 bool leaveOnStack = false) : L(L)
 	{
+		//Count the arguments supplied to the Lua function.
+		int argc = lua_gettop(L);
+		
 		//Create a new table which will act as the object instance.
 		lua_newtable(L);
 		
@@ -78,7 +80,13 @@ public:
 		//name, or using the first argument of the Lua function call on the
 		//stack as table.
 		if (!className) {
-			luaL_checktype(L, 1, LUA_TTABLE);
+			if (argc != 1 || lua_type(L, 1) != LUA_TTABLE) {
+				lua_pop(L, 1);
+				luaL_error(L, "Trying to construct a LuaExposable "
+						   "without a valid class table. Call Class:new() "
+						   "instead of Class.new().\n");
+				return;
+			}
 			lua_pushvalue(L, 1);
 		} else {
 			lua_getglobal(L, className);
@@ -122,16 +130,33 @@ public:
 		return 0;
 	}
 	
-private:
+	/** Convenience function that calls a Lua method, i.e. a function without
+	 any arguments and return values. Returns whether the call was successful.*/
+	int callMethod(const char * fn)
+	{
+		//Load the function to be called.
+		int err = loadFunction(fn);
+		if (err != 0)
+			return err;
+		
+		//Call the function.
+		err = lua_pcall(L, 1, 0, 0);
+		if (err != 0)
+			LuaError::report(L);
+		return err;
+	}
+	
+protected:
 	/** Reference to the Lua state the instance of this object lives in. */
 	lua_State * L;
 	/** Reference to the Lua instance of this object. */
 	int ref;
 	
+private:
 	/** Instantiates a new instance of the given class. */
 	template <typename T> static int lua_new(lua_State * L)
 	{
-		new T(L, NULL); return 1;
+		new T(L, NULL, true); return 1;
 	}
 	
 	/** Deletes the object. */
@@ -147,3 +172,7 @@ private:
 		return 0;
 	}
 };
+
+
+/** Creates a wrapper method for a certain Lua method. Convenience. */
+#define LuaExposable_WrapCallMethod(func) void func() { callMethod(#func); }
