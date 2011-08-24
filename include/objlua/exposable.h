@@ -7,16 +7,16 @@
 /** All the objects that are likely to be exposed to Lua should inherit from
  this superclass. This fasciliates function exposure and handling of the
  instance pairs between C++ and Lua. */
-class LuaExposable {
+template <typename T> class LuaExposable {
 public:
 	/** Exposes a basic set of functions to Lua. Classes which would like to ex-
 	 pose to Lua should first create their own class table using LuaClass::make,
 	 call LuaExposable::expose to add the basic funcitonality and register their
 	 own functions.*/
-	template <typename T> static void expose(lua_State * L)
+	static void expose(lua_State * L)
 	{
 		static const luaL_Reg functions[] = {
-			{"new", lua_new<T>},
+			{"new", lua_new},
 			{"delete", lua_delete},
 			{NULL, NULL}
 		};
@@ -27,7 +27,7 @@ public:
 	 trieve the C++ object pointer it is associated with.
 	 
 	 @return Returns NULL if retrieval was unsuccessful. */
-	template <typename T> static T * fromStack(lua_State * L, int index)
+	static T * fromStack(lua_State * L, int index)
 	{
 		//Check whether the type matches.
 		luaL_checktype(L, index, LUA_TTABLE);
@@ -68,9 +68,15 @@ public:
 		//Create a new table which will act as the object instance.
 		lua_newtable(L);
 		
+		
 		//Allocate memory for a pointer to the object.
-		LuaExposable ** s = (LuaExposable **)lua_newuserdata(L, sizeof(LuaExposable *));
-		*s = this;
+		LuaExposable ** s = (LuaExposable **)lua_newuserdata(L, sizeof(LuaExposable<T> *));
+		
+		//Now to some magic. We need the pointer to point at the entire class, not only at the
+		//LuaExposable portion. The following snippet of code shifts the this pointer appropriately.
+		//It is taken from the "Enginuity Part II" tutorial on gamedev.net.
+		long offset = (long)(T *)1 - (long)(LuaExposable<T> *)(T *)1;
+		*s = (LuaExposable<T> *)((long)this + offset);
 		
 		//Store the userdata under the __this index in the table.
 		lua_setfield(L, -2, "__this");
@@ -154,7 +160,7 @@ protected:
 	
 private:
 	/** Instantiates a new instance of the given class. */
-	template <typename T> static int lua_new(lua_State * L)
+	static int lua_new(lua_State * L)
 	{
 		new T(L, NULL, true); return 1;
 	}
@@ -163,7 +169,7 @@ private:
 	static int lua_delete(lua_State * L)
 	{
 		//Get the pointer to the object.
-		LuaExposable * obj = fromStack<LuaExposable>(L, -1);
+		T * obj = fromStack(L, -1);
 		if (!obj)
 			return luaL_error(L, "Unable to delete object.");
 		
@@ -175,4 +181,12 @@ private:
 
 
 /** Creates a wrapper method for a certain Lua method. Convenience. */
-#define LuaExposable_WrapCallMethod(func) void func() { callMethod(#func); }
+#define OBJLUA_WRAP_METHOD(func) void func() { callMethod(#func); }
+
+/** Synthesizes the default constructor for the given class and a default class name. */
+#define OBJLUA_CONSTRUCTOR_WITH_CLASS_NAME(cls, name) \
+cls(lua_State * L, const char * className = name, bool leaveOnStack = false) \
+: LuaExposable<cls>(L, className, leaveOnStack)
+
+/** Synthesizes the default constructor for the given class. */
+#define OBJLUA_CONSTRUCTOR(cls) OBJLUA_CONSTRUCTOR_WITH_CLASS_NAME(cls, #cls)
