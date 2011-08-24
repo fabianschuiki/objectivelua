@@ -40,8 +40,8 @@ public:
 		s << "{\n";
 		for (lua_pushnil(L); lua_next(L, index); lua_pop(L, 1)) {
 			
-			//Copy the key to the top of the stack, since luaL_checkstring messes with it which would
-			//break lua_next if it did so in-place.
+			//Copy the key to the top of the stack, since luaL_checkstring
+			//messes with it which would break lua_next if it did so in-place.
 			lua_pushvalue(L, -2);
 			const char * key = lua_tostring(L, -1);
 			lua_pop(L, 1);
@@ -79,5 +79,11 @@ public:
 		s << index;
 		s << ">";
 		return s.str();
+	}
+	
+	/** Returns the description of the stack item at the given index. */
+	static std::string generic(lua_State * L, int index)
+	{
+		return generic(L, lua_type(L, index), index);
 	}
 };

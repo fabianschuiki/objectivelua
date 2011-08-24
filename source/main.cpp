@@ -15,8 +15,7 @@ int main(int argc, char * argv[])
 	Sprite::expose(lua);
 	
     //Run a Lua file for debugging purposes.
-    if (luaL_dofile(lua, "scripts/debug.lua"))
-        lua.reportError();
+	lua.dofile("scripts/debug.lua");
     
 	//Now the script should actually have returned a Sprite instance.
 	/*Sprite * sprite = Sprite::fromStack<Sprite>(lua, -1);

@@ -33,6 +33,9 @@ public:
 	 class index is provided, the new class will extend the given class. */
 	static void make(lua_State * L, const char * className, int superclass = 0)
 	{
+		if (superclass < 0)
+			superclass += lua_gettop(L);
+		
 		//Create the new class table.
 		lua_newtable(L);
 		
@@ -57,6 +60,15 @@ public:
 		//Move the class table into the global namespace.
 		lua_pushvalue(L, -1);
 		lua_setglobal(L, className);
+	}
+	
+	/** Same as make, but looks up the superclass by its name. */
+	static void make(lua_State * L, const char * className,
+					 const char * superclass)
+	{
+		lua_getglobal(L, superclass);
+		make(L, className, -1);
+		lua_pop(L, 1);
 	}
 	
 private:
