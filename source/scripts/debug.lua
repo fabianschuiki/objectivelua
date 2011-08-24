@@ -1,4 +1,3 @@
-print("Hello, World!")
 
 -- Create a table for debugging the table functionality.
 t = {
@@ -15,11 +14,13 @@ t = {
     }
 }
 
-function test(tab)
-	print("test caled!")
-	dumpStack()
-end
+-- Create a new sprite for debugging purposes.
+local s1 = Sprite.new()
+s1.name = "Office"
+local s2 = Sprite.new()
+s2.name = "Fast Food";
 
-test(t);
+s1:animate();
+s2:animate();
 
-return "Hello", t
+--return "Hello", t

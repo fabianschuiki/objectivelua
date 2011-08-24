@@ -9,5 +9,5 @@ find_package(Lua51)
 include_directories(${LUA_INCLUDE_DIR})
 
 # Debug executable to develop the whole project.
-add_executable(debug main.cpp)
+add_executable(debug main.cpp sprite.cpp)
 target_link_libraries(debug ${LUA_LIBRARIES})

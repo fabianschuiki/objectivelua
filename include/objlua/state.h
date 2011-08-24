@@ -21,6 +21,7 @@ public:
 		
 		//Register helper functions.
 		lua_register(state, "dumpStack", lua_dumpStack);
+		lua_register(state, "dump", lua_dump);
         
         //Load the default libraries.
         luaL_openlibs(state);
@@ -33,7 +34,18 @@ public:
     operator lua_State * () { return state; }
     
     /** Convenience wrapper around the objlua_reportError function. */
-    void reportError() { objlua_reportError(*this); }
+    void reportError() { LuaError::report(*this); }
+	
+	/** Convenience wrapper around luaL_dofile which automatically reports any
+	 errors that might occur. */
+	bool dofile(const char * fn)
+	{
+		if (luaL_dofile(state, fn)) {
+			reportError();
+			return false;
+		}
+		return true;
+	}
     
 private:
     /** The wrapped lua state. **/
@@ -55,12 +67,21 @@ private:
         std::cerr.flush();
 		
 		//Dump the stack.
-		objlua_dumpStack(L);
+		LuaStack::dump(L);
         
         return 0;
     }
 	
 	/** Function exposed to Lua which dumps the current Lua stack to the
 	 console. Great for debugging. */
-	static int lua_dumpStack(lua_State * L) { objlua_dumpStack(L); return 0; }
+	static int lua_dumpStack(lua_State * L) { LuaStack::dump(L); return 0; }
+	
+	/** Function exposed to Lua which dumps the given parameter to the
+	 console. */
+	static int lua_dump(lua_State * L)
+	{
+		int top = lua_gettop(L);
+		std::cout << LuaDescribe::generic(L, lua_type(L, top), top) << "\n";
+		return 0;
+	}
 };
