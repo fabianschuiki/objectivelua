@@ -8,3 +8,10 @@ and callbacks.
 function Sprite:animate()
 	print("Sprite:animate(), sprite name = " .. self.name)
 end
+
+subclass(Item, OfficeItem)
+
+function OfficeItem:hello()
+end
+
+local o = OfficeItem:new()
