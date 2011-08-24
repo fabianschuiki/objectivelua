@@ -18,9 +18,12 @@ t = {
 local s1 = Sprite.new()
 s1.name = "Office"
 local s2 = Sprite.new()
-s2.name = "Fast Food";
+s2.name = "Fast Food"
 
-s1:animate();
-s2:animate();
+dump(s1)
+s1:say()
+s2:say()
+
+return s1
 
 --return "Hello", t

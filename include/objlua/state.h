@@ -65,6 +65,7 @@ private:
         else
             std::cerr << lua_topointer(L, -1) << "\n";
         std::cerr.flush();
+		lua_pop(L, 1);
 		
 		//Dump the stack.
 		LuaStack::dump(L);

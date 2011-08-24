@@ -17,10 +17,9 @@ int main(int argc, char * argv[])
     if (luaL_dofile(lua, "scripts/debug.lua"))
         lua.reportError();
     
-	std::cout << "--- will call animate() now\n";
-	
-	//Call the animate function of one of the sprites.
-	Sprite::lastInstance->animate(lua);
+	//Now the script should actually have returned a Sprite instance.
+	Sprite * sprite = Sprite::fromStack(lua, -1);
+	sprite->animate();
     
     return 0;
 }
