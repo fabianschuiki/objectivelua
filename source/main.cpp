@@ -14,7 +14,7 @@ int main(int argc, char * argv[])
         lua.reportError();
     
     //Dump the stack.
-    objlua_dumpStack(lua);
+    //objlua_dumpStack(lua);
     
     return 0;
 }

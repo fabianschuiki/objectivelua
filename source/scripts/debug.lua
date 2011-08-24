@@ -9,9 +9,17 @@ t = {
         a = 9,
         b = "buh"
     },
+	isValid = true,
     test = {
-    	a, b, c
+    	"a", 5, "alpha"
     }
 }
+
+function test(tab)
+	print("test caled!")
+	dumpStack()
+end
+
+test(t);
 
 return "Hello", t

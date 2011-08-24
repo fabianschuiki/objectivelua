@@ -1,6 +1,7 @@
 #pragma once
-#include "lua.h"
 #include "error.h"
+#include "lua.h"
+#include "stack.h"
 
 
 class LuaState {
@@ -17,6 +18,9 @@ public:
         
         //Register the basic panic fallback.
         lua_atpanic(state, lua_panic);
+		
+		//Register helper functions.
+		lua_register(state, "dumpStack", lua_dumpStack);
         
         //Load the default libraries.
         luaL_openlibs(state);
@@ -40,7 +44,7 @@ private:
     static int lua_panic(lua_State * L)
     {
         //Dump a general warning.
-        std::cerr << "objlua: *** Lua error outside of protected mode:\n";
+        std::cerr << "objlua: *** PANIC: ";
         std::cerr.flush();
         
         //Show the error details.
@@ -49,7 +53,14 @@ private:
         else
             std::cerr << lua_topointer(L, -1) << "\n";
         std::cerr.flush();
+		
+		//Dump the stack.
+		objlua_dumpStack(L);
         
         return 0;
     }
+	
+	/** Function exposed to Lua which dumps the current Lua stack to the
+	 console. Great for debugging. */
+	static int lua_dumpStack(lua_State * L) { objlua_dumpStack(L); return 0; }
 };
