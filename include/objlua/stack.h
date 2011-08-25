@@ -5,12 +5,20 @@
 
 class LuaStack {
 public:
-	/** Dumps the entire stack of the given Lua virtual machine. */
+	/** Serializes the stack and dumps it to the console. */
 	static void dump(lua_State * L)
 	{
+		std::cout << "objlua: stack " << describe(L) << "\n";
+	}
+	
+	/** Serializes the entire stack into a string. Very handy for debugging. */
+	static std::string describe(lua_State * L)
+	{
+		std::stringstream s;
+		
 		//Find the number of items on the stack.
 		int n = lua_gettop(L);
-		std::cout << "objlua: stack (\n";
+		s << "(\n";
 		
 		//Iterate through the stack from top to bottom and show each entry.
 		for (int i = n; i > 0; i--) {
@@ -18,15 +26,16 @@ public:
 			int type = lua_type(L, i);
 			
 			//Dump the header.
-			std::cout << "    [" << i << "] ";
+			s << "    [" << i << "] ";
 			
 			//Dump the contents of whatever there is on the stack.
-			std::cout << LuaDescribe::generic(L, type, i, 1);
+			s << LuaDescribe::generic(L, type, i, 1);
 			
-			std::cout << "\n";
+			s << "\n";
 		}
 		
 		//Close the stack bracket.
-		std::cout << ")\n";
+		s << ")";
+		return s.str();
 	}
 };

@@ -25,6 +25,12 @@ public:
         
         //Load the default libraries.
         luaL_openlibs(state);
+		
+		//Reset the stack so we get a clean working area.
+		lua_settop(state, 0);
+		
+		//Register the stacktrace function which may be used as an error function for Lua errors.
+		lua_register(state, "stacktrace", stacktrace);
     }
     /** Destructor which closes the state and cleans up. */
     ~LuaState() { lua_close(state); state = NULL; }
@@ -41,12 +47,38 @@ public:
 	bool dofile(const char * fn)
 	{
 		if (luaL_dofile(state, fn)) {
+			stacktrace(state);
 			reportError();
 			return false;
 		}
 		return true;
 	}
     
+	/** Takes the error at the top of the stack and converts it to a string, then appends a trace-
+	 back for debugging purposes. */
+	static int stacktrace(lua_State * L)
+	{
+		//Convert the error to a string.
+		lua_getglobal(L, "tostring");
+		lua_insert(L, -2);
+		lua_call(L, 1, 1);
+		
+		//Call Lua's traceback function. It will take the error message and append the trace. Since
+		//we don't want ourself to appear in the trace, we start at level 2.
+		lua_getglobal(L, "debug");
+		lua_getfield(L, -1, "traceback");
+		lua_pushvalue(L, -3);
+		lua_pushinteger(L, 2);
+		lua_call(L, 2, 1);
+		lua_insert(L, -3);
+		
+		//Move the result behind the debug global and the initial error message so they can both be
+		//popped off the stack.
+		lua_pop(L, 2);
+		
+		return 1;
+	}
+	
 private:
     /** The wrapped lua state. **/
     lua_State * state;
@@ -66,9 +98,6 @@ private:
             std::cerr << lua_topointer(L, -1) << "\n";
         std::cerr.flush();
 		lua_pop(L, 1);
-		
-		//Dump the stack.
-		LuaStack::dump(L);
         
         return 0;
     }

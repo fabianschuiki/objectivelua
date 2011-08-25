@@ -1,4 +1,6 @@
 #pragma once
+#include <cassert>
+#include <cstdarg>
 #include "error.h"
 #include "lua.h"
 #include "stack.h"
@@ -16,8 +18,8 @@ public:
 	static void expose(lua_State * L)
 	{
 		static const luaL_Reg functions[] = {
-			{"new", lua_new},
-			{"delete", lua_delete},
+			{"new", T::lua_new},
+			{"delete", T::lua_delete},
 			{NULL, NULL}
 		};
 		luaL_register(L, 0, functions);
@@ -59,15 +61,15 @@ public:
 	 passed. The given class name is used to lookup the Lua metatable that
 	 contains the class inteface. If leaveOnStack is true, the resulting object
 	 is left on the Lua stack so it may be used later on. */
-	LuaExposable(lua_State * L, const char * className = NULL,
-				 bool leaveOnStack = false) : L(L)
+	LuaExposable(lua_State * L, const char * className = NULL) : L(L)
 	{
+		bool leaveOnStack = (className == NULL);
+		
 		//Count the arguments supplied to the Lua function.
 		int argc = lua_gettop(L);
 		
 		//Create a new table which will act as the object instance.
 		lua_newtable(L);
-		
 		
 		//Allocate memory for a pointer to the object.
 		LuaExposable ** s = (LuaExposable **)lua_newuserdata(L, sizeof(LuaExposable<T> *));
@@ -86,7 +88,7 @@ public:
 		//name, or using the first argument of the Lua function call on the
 		//stack as table.
 		if (!className) {
-			if (argc != 1 || lua_type(L, 1) != LUA_TTABLE) {
+			if (argc < 1 || lua_type(L, 1) != LUA_TTABLE) {
 				lua_pop(L, 1);
 				luaL_error(L, "Trying to construct a LuaExposable "
 						   "without a valid class table. Call Class:new() "
@@ -94,10 +96,34 @@ public:
 				return;
 			}
 			lua_pushvalue(L, 1);
+			lua_remove(L, 1);
 		} else {
 			lua_getglobal(L, className);
 		}
-		lua_setmetatable(L, -2);
+		lua_getfield(L, -1, "__class");
+		lua_insert(L, -2);
+		lua_setmetatable(L, -3);
+		
+		//Try to get a grip on the constructor for this class.
+		lua_gettable(L, -2);
+		if (lua_isfunction(L, -1)) {
+			//Move the function behin the first constructor argument.
+			lua_insert(L, 1);
+			
+			//Duplicate the self, move one behind the function so it is available later, and one
+			//after the function so it gets passed as the self argument.
+			lua_pushvalue(L, -1);
+			lua_insert(L, 1);
+			lua_insert(L, 3);
+			
+			//Run the constructor.
+			if (lua_pcall(L, (className ? argc + 1 : argc), 0, 0) != 0) {
+				LuaState::stacktrace(L);
+				LuaError::report(L);
+			}
+		} else {
+			lua_pop(L, 1);
+		}
 		
 		//Fetch a reference to the object. If we're required to leave the
 		//initialized instance on the stack, we need to copy it so we may get
@@ -120,36 +146,86 @@ public:
 	
 	/** Pushes the given function and this instance onto the Lua stack, so the
 	 function may be called. */
-	int loadFunction(const char * fn)
+	bool loadFunction(const char * fn)
 	{
+		assert(fn);
+		
 		//Resolve the reference and move it onto the stack.
 		loadReference();
 		
 		//Get the requested function.
 		lua_getfield(L, -1, fn);
-		if (!lua_isfunction(L, -1))
-			return luaL_error(L, "Unable to load unknown function \"%s\"", fn);
+		if (!lua_isfunction(L, -1)) {
+			lua_pop(L, 2);
+			//lua_pushfstring(L, "Unable to load unknown function \"%s\"", fn);
+			return false;
+		}
 		
 		//Move the function pointer behind the reference so the order of
 		//arguments is correct for the Lua function calls.
 		lua_insert(L, -2);
-		return 0;
+		return true;
 	}
 	
-	/** Convenience function that calls a Lua method, i.e. a function without
-	 any arguments and return values. Returns whether the call was successful.*/
-	int callMethod(const char * fn)
+	/** Calls the Lua function with the given name. Each character in the format string specifies
+	 the type of an argument to be passed to the function. The results field indicates how many re-
+	 turn values are to be expected of the call.
+	 
+	 The following are the accepted argument types:
+	 n  number (double)
+	 s	C string (const char *)
+	 o  Object (LuaExposable *)
+	 */
+	bool callFunction(const char * fn, const char * format = "", int results = 0, ...)
 	{
-		//Load the function to be called.
-		int err = loadFunction(fn);
-		if (err != 0)
-			return err;
+		assert(fn && format);
+		
+		//Load the stacktrace.
+		lua_getglobal(L, "stacktrace");
+		int trace = lua_gettop(L);
+		
+		//Load the requested function.
+		if (!loadFunction(fn)) {
+			/*LuaState::stacktrace(L);
+			LuaError::report(L);*/
+			lua_remove(L, trace);
+			return false;
+		}
+		
+		//Fetch the argument list.
+		va_list args;
+		va_start(args, results);
+		
+		//Iterate through the format and push the argument to the Lua stack, depending on the format
+		//specification.
+		int argc = 0;
+		for (const char * ptr = format; *ptr != 0; ptr++) {
+			switch (*ptr) {
+				case 'n':	lua_pushnumber(L, va_arg(args, double)); break;
+				case 's':	lua_pushstring(L, va_arg(args, const char *)); break;
+				case 'o':	va_arg(args, LuaExposable *)->loadReference(); break;
+				default: {
+					std::cerr << "objlua: *** Format error in call to function ";
+					std::cerr << fn << ", type " << *ptr << " unknown\n";
+					return false;
+				} break;
+			}
+			argc++;
+		}
 		
 		//Call the function.
-		err = lua_pcall(L, 1, 0, 0);
-		if (err != 0)
+		if (lua_pcall(L, argc + 1, results, trace) != 0) {
 			LuaError::report(L);
-		return err;
+			lua_remove(L, trace);
+			return false;
+		}
+		
+		//Get rid of the stacktrace global.
+		lua_pop(L, 1);
+		
+		//We're done.
+		va_end(args);
+		return true;
 	}
 	
 protected:
@@ -158,11 +234,11 @@ protected:
 	/** Reference to the Lua instance of this object. */
 	int ref;
 	
-private:
+protected:
 	/** Instantiates a new instance of the given class. */
 	static int lua_new(lua_State * L)
 	{
-		new T(L, NULL, true); return 1;
+		new T(L); return 1;
 	}
 	
 	/** Deletes the object. */
@@ -179,14 +255,9 @@ private:
 	}
 };
 
-
-/** Creates a wrapper method for a certain Lua method. Convenience. */
-#define OBJLUA_WRAP_METHOD(func) void func() { callMethod(#func); }
-
 /** Synthesizes the default constructor for the given class and a default class name. */
 #define OBJLUA_CONSTRUCTOR_WITH_CLASS_NAME(cls, name) \
-cls(lua_State * L, const char * className = name, bool leaveOnStack = false) \
-: LuaExposable<cls>(L, className, leaveOnStack)
+cls(lua_State * L, const char * className = name) : LuaExposable<cls>(L, className)
 
 /** Synthesizes the default constructor for the given class. */
 #define OBJLUA_CONSTRUCTOR(cls) OBJLUA_CONSTRUCTOR_WITH_CLASS_NAME(cls, #cls)

@@ -76,7 +76,8 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div>
 <div class="header">
   <div class="summary">
-<a href="#pub-methods">Public Member Functions</a>  </div>
+<a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-methods">Static Public Member Functions</a>  </div>
   <div class="headertitle">
 <div class="title">LuaState Class Reference</div>  </div>
 </div>
@@ -91,6 +92,9 @@ Public Member Functions</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_lua_state.html#a8f81457273a33f4018929c456a01c445">operator lua_State *</a> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_lua_state.html#a5f4d614b9c126a46e0c6f8ab4fb4dea8">reportError</a> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_lua_state.html#aca22eacfa101b2559ab4bce1ec22bb8d">dofile</a> (const char *fn)</td></tr>
+<tr><td colspan="2"><h2><a name="pub-static-methods"></a>
+Static Public Member Functions</h2></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_lua_state.html#a8fb59038bac33fcd47cd8600fa8d770c">stacktrace</a> (lua_State *L)</td></tr>
 </table>
 <hr/><a name="details" id="details"></a><h2>Detailed Description</h2>
 <div class="textblock">
@@ -130,7 +134,7 @@ Public Member Functions</h2></td></tr>
 <div class="memdoc">
 <p>Destructor which closes the state and cleans up. </p>
 
-<p>Definition at line <a class="el" href="state_8h_source.html#l00030">30</a> of file <a class="el" href="state_8h_source.html">state.h</a>.</p>
+<p>Definition at line <a class="el" href="state_8h_source.html#l00036">36</a> of file <a class="el" href="state_8h_source.html">state.h</a>.</p>
 
 </div>
 </div>
@@ -151,7 +155,7 @@ Public Member Functions</h2></td></tr>
 <div class="memdoc">
 <p>Convenience wrapper around luaL_dofile which automatically reports any errors that might occur. </p>
 
-<p>Definition at line <a class="el" href="state_8h_source.html#l00041">41</a> of file <a class="el" href="state_8h_source.html">state.h</a>.</p>
+<p>Definition at line <a class="el" href="state_8h_source.html#l00047">47</a> of file <a class="el" href="state_8h_source.html">state.h</a>.</p>
 
 </div>
 </div>
@@ -170,7 +174,7 @@ Public Member Functions</h2></td></tr>
 <div class="memdoc">
 <p>Convenience cast operator so you can use the <a class="el" href="class_lua_state.html">LuaState</a> instance as if it were a normal lua_State. </p>
 
-<p>Definition at line <a class="el" href="state_8h_source.html#l00034">34</a> of file <a class="el" href="state_8h_source.html">state.h</a>.</p>
+<p>Definition at line <a class="el" href="state_8h_source.html#l00040">40</a> of file <a class="el" href="state_8h_source.html">state.h</a>.</p>
 
 </div>
 </div>
@@ -189,7 +193,27 @@ Public Member Functions</h2></td></tr>
 <div class="memdoc">
 <p>Convenience wrapper around the objlua_reportError function. </p>
 
-<p>Definition at line <a class="el" href="state_8h_source.html#l00037">37</a> of file <a class="el" href="state_8h_source.html">state.h</a>.</p>
+<p>Definition at line <a class="el" href="state_8h_source.html#l00043">43</a> of file <a class="el" href="state_8h_source.html">state.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a8fb59038bac33fcd47cd8600fa8d770c"></a><!-- doxytag: member="LuaState::stacktrace" ref="a8fb59038bac33fcd47cd8600fa8d770c" args="(lua_State *L)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">static int LuaState::stacktrace </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td><code> [inline, static]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+<p>Takes the error at the top of the stack and converts it to a string, then appends a trace- back for debugging purposes. </p>
+
+<p>Definition at line <a class="el" href="state_8h_source.html#l00059">59</a> of file <a class="el" href="state_8h_source.html">state.h</a>.</p>
 
 </div>
 </div>
@@ -214,7 +238,7 @@ Public Member Functions</h2></td></tr>
 
 
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Aug 24 2011 21:40:22 for ObjectiveLua by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu Aug 25 2011 12:46:02 for ObjectiveLua by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.7.5.1
 </small></address>

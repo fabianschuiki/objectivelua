@@ -85,28 +85,36 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <a name="l00007"></a>00007 <span class="keyword">public</span>:
 <a name="l00009"></a><a class="code" href="class_lua_stack.html#adbaba7504169dc88f1a450f5316d9ae1">00009</a>         <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="class_lua_stack.html#adbaba7504169dc88f1a450f5316d9ae1">dump</a>(lua_State * L)
 <a name="l00010"></a>00010         {
-<a name="l00011"></a>00011                 <span class="comment">//Find the number of items on the stack.</span>
-<a name="l00012"></a>00012                 <span class="keywordtype">int</span> n = lua_gettop(L);
-<a name="l00013"></a>00013                 std::cout &lt;&lt; <span class="stringliteral">&quot;objlua: stack (\n&quot;</span>;
-<a name="l00014"></a>00014                 
-<a name="l00015"></a>00015                 <span class="comment">//Iterate through the stack from top to bottom and show each entry.</span>
-<a name="l00016"></a>00016                 <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = n; i &gt; 0; i--) {
-<a name="l00017"></a>00017                         <span class="comment">//Extract the stack entry&#39;s type.</span>
-<a name="l00018"></a>00018                         <span class="keywordtype">int</span> type = lua_type(L, i);
-<a name="l00019"></a>00019                         
-<a name="l00020"></a>00020                         <span class="comment">//Dump the header.</span>
-<a name="l00021"></a>00021                         std::cout &lt;&lt; <span class="stringliteral">&quot;    [&quot;</span> &lt;&lt; i &lt;&lt; <span class="stringliteral">&quot;] &quot;</span>;
-<a name="l00022"></a>00022                         
-<a name="l00023"></a>00023                         <span class="comment">//Dump the contents of whatever there is on the stack.</span>
-<a name="l00024"></a>00024                         std::cout &lt;&lt; <a class="code" href="class_lua_describe.html#a293e9a7ac378886ace17d37f0e9eaaf5">LuaDescribe::generic</a>(L, type, i, 1);
-<a name="l00025"></a>00025                         
-<a name="l00026"></a>00026                         std::cout &lt;&lt; <span class="stringliteral">&quot;\n&quot;</span>;
-<a name="l00027"></a>00027                 }
-<a name="l00028"></a>00028                 
-<a name="l00029"></a>00029                 <span class="comment">//Close the stack bracket.</span>
-<a name="l00030"></a>00030                 std::cout &lt;&lt; <span class="stringliteral">&quot;)\n&quot;</span>;
-<a name="l00031"></a>00031         }
-<a name="l00032"></a>00032 };
+<a name="l00011"></a>00011                 std::cout &lt;&lt; <span class="stringliteral">&quot;objlua: stack &quot;</span> &lt;&lt; <a class="code" href="class_lua_stack.html#ad505ef162d075101163f9e0e152d6e15">describe</a>(L) &lt;&lt; <span class="stringliteral">&quot;\n&quot;</span>;
+<a name="l00012"></a>00012         }
+<a name="l00013"></a>00013         
+<a name="l00015"></a><a class="code" href="class_lua_stack.html#ad505ef162d075101163f9e0e152d6e15">00015</a>         <span class="keyword">static</span> std::string <a class="code" href="class_lua_stack.html#ad505ef162d075101163f9e0e152d6e15">describe</a>(lua_State * L)
+<a name="l00016"></a>00016         {
+<a name="l00017"></a>00017                 std::stringstream s;
+<a name="l00018"></a>00018                 
+<a name="l00019"></a>00019                 <span class="comment">//Find the number of items on the stack.</span>
+<a name="l00020"></a>00020                 <span class="keywordtype">int</span> n = lua_gettop(L);
+<a name="l00021"></a>00021                 s &lt;&lt; <span class="stringliteral">&quot;(\n&quot;</span>;
+<a name="l00022"></a>00022                 
+<a name="l00023"></a>00023                 <span class="comment">//Iterate through the stack from top to bottom and show each entry.</span>
+<a name="l00024"></a>00024                 <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = n; i &gt; 0; i--) {
+<a name="l00025"></a>00025                         <span class="comment">//Extract the stack entry&#39;s type.</span>
+<a name="l00026"></a>00026                         <span class="keywordtype">int</span> type = lua_type(L, i);
+<a name="l00027"></a>00027                         
+<a name="l00028"></a>00028                         <span class="comment">//Dump the header.</span>
+<a name="l00029"></a>00029                         s &lt;&lt; <span class="stringliteral">&quot;    [&quot;</span> &lt;&lt; i &lt;&lt; <span class="stringliteral">&quot;] &quot;</span>;
+<a name="l00030"></a>00030                         
+<a name="l00031"></a>00031                         <span class="comment">//Dump the contents of whatever there is on the stack.</span>
+<a name="l00032"></a>00032                         s &lt;&lt; <a class="code" href="class_lua_describe.html#a293e9a7ac378886ace17d37f0e9eaaf5">LuaDescribe::generic</a>(L, type, i, 1);
+<a name="l00033"></a>00033                         
+<a name="l00034"></a>00034                         s &lt;&lt; <span class="stringliteral">&quot;\n&quot;</span>;
+<a name="l00035"></a>00035                 }
+<a name="l00036"></a>00036                 
+<a name="l00037"></a>00037                 <span class="comment">//Close the stack bracket.</span>
+<a name="l00038"></a>00038                 s &lt;&lt; <span class="stringliteral">&quot;)&quot;</span>;
+<a name="l00039"></a>00039                 <span class="keywordflow">return</span> s.str();
+<a name="l00040"></a>00040         }
+<a name="l00041"></a>00041 };
 </pre></div></div>
 </div>
 <!-- window showing the filter options -->
@@ -126,7 +134,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Aug 24 2011 21:40:22 for ObjectiveLua by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu Aug 25 2011 12:46:02 for ObjectiveLua by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.7.5.1
 </small></address>
