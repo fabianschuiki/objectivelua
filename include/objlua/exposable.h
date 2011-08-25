@@ -57,11 +57,25 @@ public:
 		return *((T **)ptr);
 	}
 	
-	/** Creates a new LuaExposable instance and exposes it to the Lua state
-	 passed. The given class name is used to lookup the Lua metatable that
-	 contains the class inteface. If leaveOnStack is true, the resulting object
-	 is left on the Lua stack so it may be used later on. */
-	LuaExposable(lua_State * L, const char * className = NULL) : L(L)
+	/** Creates a new LuaExposable instance. The instance is not automatically constructed in Lua,
+	 you have to do this manually by calling the constructLua function. */
+	LuaExposable(lua_State * L) : L(L) {}
+	
+	/** Gets rid of the LuaExposable instance. */
+	virtual ~LuaExposable()
+	{
+		//Remove the reference we hold to our instance.
+		luaL_unref(L, LUA_REGISTRYINDEX, ref);
+		ref = 0;
+	}
+	
+	/** Constructs the Lua representation of this object. This function effectively instantiates
+	 the class in Lua and links the instance to this C++ object.
+	 
+	 @param className	Name of the class to be instantiated. If NULL, the function takes the first
+						value on the stack as a class table, i.e. will treat the stack as a function
+						call to lua_new. */
+	void constructLua(const char * className = NULL)
 	{
 		bool leaveOnStack = (className == NULL);
 		
@@ -131,14 +145,6 @@ public:
 		if (leaveOnStack)
 			lua_pushvalue(L, -1);
 		ref = luaL_ref(L, LUA_REGISTRYINDEX);
-	}
-	
-	/** Gets rid of the LuaExposable instance. */
-	virtual ~LuaExposable()
-	{
-		//Remove the reference we hold to our instance.
-		luaL_unref(L, LUA_REGISTRYINDEX, ref);
-		ref = 0;
 	}
 	
 	/** Pushes this instance's table onto the Lua stack. */
@@ -238,7 +244,9 @@ protected:
 	/** Instantiates a new instance of the given class. */
 	static int lua_new(lua_State * L)
 	{
-		new T(L); return 1;
+		T * instance = new T(L);
+		instance->constructLua(NULL);
+		return 1;
 	}
 	
 	/** Deletes the object. */
@@ -255,9 +263,4 @@ protected:
 	}
 };
 
-/** Synthesizes the default constructor for the given class and a default class name. */
-#define OBJLUA_CONSTRUCTOR_WITH_CLASS_NAME(cls, name) \
-cls(lua_State * L, const char * className = name) : LuaExposable<cls>(L, className)
-
-/** Synthesizes the default constructor for the given class. */
-#define OBJLUA_CONSTRUCTOR(cls) OBJLUA_CONSTRUCTOR_WITH_CLASS_NAME(cls, #cls)
+#define OBJLUA_CONSTRUCTOR(cls) cls(lua_State *L) : LuaExposable<cls>(L)
