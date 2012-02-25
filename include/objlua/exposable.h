@@ -4,6 +4,7 @@
 #include "error.h"
 #include "lua.h"
 #include "stack.h"
+#include "state.h"
 
 
 /** All the objects that are likely to be exposed to Lua should inherit from
