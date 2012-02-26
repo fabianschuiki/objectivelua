@@ -5,6 +5,7 @@
 #include "lua.h"
 #include "stack.h"
 #include "state.h"
+#include "functions.h"
 
 
 /** All the objects that are likely to be exposed to Lua should inherit from
@@ -148,30 +149,14 @@ public:
 		ref = luaL_ref(L, LUA_REGISTRYINDEX);
 	}
 	
-	/** Pushes this instance's table onto the Lua stack. */
-	void loadReference() { lua_rawgeti(L, LUA_REGISTRYINDEX, ref); }
+	/** Pushes this instance's table onto the Lua stack. Calls loadReference(ref). */
+	void loadReference() { Lua::loadReference(L, ref); }
 	
 	/** Pushes the given function and this instance onto the Lua stack, so the
 	 function may be called. */
 	bool loadFunction(const char * fn)
 	{
-		assert(fn);
-		
-		//Resolve the reference and move it onto the stack.
-		loadReference();
-		
-		//Get the requested function.
-		lua_getfield(L, -1, fn);
-		if (!lua_isfunction(L, -1)) {
-			lua_pop(L, 2);
-			//lua_pushfstring(L, "Unable to load unknown function \"%s\"", fn);
-			return false;
-		}
-		
-		//Move the function pointer behind the reference so the order of
-		//arguments is correct for the Lua function calls.
-		lua_insert(L, -2);
-		return true;
+		return Lua::loadFunction(L, fn, ref);
 	}
 	
 	/** Calls the Lua function with the given name. Each character in the format string specifies
